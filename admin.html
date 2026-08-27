@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CECO Energy — Admin Panel</title>
+<link rel="preconnect" href="https://alsqbfmspujgevxhwlpz.supabase.co">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+  :root{
+    --red:#E31E26; --red-dark:#B9151C; --charcoal:#2E2E30; --charcoal-soft:#54545A;
+    --amber:#F5A623; --bg:#FBFAF8; --panel-bg:#F2F0EC; --line:#E7E4DE; --green:#1e9e56; --green-bg:#e9f8ef;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--charcoal);min-height:100vh;}
+  h1,h2,h3{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;}
+  input,select,textarea,button{font-family:inherit;}
+
+  /* ---------- SETUP NOTICE ---------- */
+  .setup-banner{
+    background:#fff3cd;border-bottom:2px solid #f5c94a;color:#6b5100;
+    padding:14px 24px;font-size:13.5px;text-align:center;display:none;
+  }
+  .setup-banner.show{display:block;}
+  .setup-banner code{background:rgba(0,0,0,.06);padding:2px 6px;border-radius:4px;}
+
+  /* ---------- LOGIN ---------- */
+  .login-screen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#2E2E30,#1a1a1c);padding:20px;
+  }
+  .login-card{
+    background:#fff;border-radius:14px;padding:44px 38px;width:100%;max-width:380px;
+    box-shadow:0 30px 60px rgba(0,0,0,.35);
+  }
+  .login-card h1{font-size:28px;color:var(--charcoal);margin-bottom:2px;}
+  .login-card .sub{font-size:13.5px;color:var(--charcoal-soft);margin-bottom:26px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--charcoal-soft);margin-bottom:6px;}
+  .field input{
+    width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:8px;font-size:14.5px;
+    transition:border-color .2s ease;
+  }
+  .field input:focus{outline:none;border-color:var(--red);}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:13px 22px;border-radius:8px;font-weight:700;font-size:14.5px;cursor:pointer;
+    border:none;transition:all .2s ease;
+  }
+  .btn-primary{background:var(--red);color:#fff;width:100%;}
+  .btn-primary:hover{background:var(--red-dark);}
+  .btn-outline{background:#fff;border:1.5px solid var(--line);color:var(--charcoal);}
+  .btn-outline:hover{border-color:var(--red);color:var(--red);}
+  .btn-danger{background:#fdeaea;color:var(--red-dark);}
+  .btn-danger:hover{background:#fbd6d6;}
+  .btn-sm{padding:8px 14px;font-size:13px;}
+  .login-error{
+    background:#fdeaea;color:var(--red-dark);font-size:13px;padding:10px 12px;border-radius:6px;
+    margin-bottom:16px;display:none;
+  }
+  .login-error.show{display:block;}
+
+  /* ---------- DASHBOARD ---------- */
+  .dash{display:none;}
+  .dash.show{display:block;}
+  header.dash-header{
+    background:var(--charcoal);color:#fff;padding:16px 0;position:sticky;top:0;z-index:10;
+  }
+  .dash-header .wrap{max-width:1180px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;}
+  .dash-header h1{font-size:22px;color:#fff;}
+  .dash-header .sub{font-size:12px;color:#a6a6ab;text-transform:none;font-family:'Manrope';}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
+  .dash-body{padding:32px 0 60px;}
+
+  .stat-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:32px;}
+  .stat-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px;}
+  .stat-card .num{font-family:'Barlow Condensed';font-size:32px;font-weight:800;color:var(--red-dark);}
+  .stat-card .lbl{font-size:12px;color:var(--charcoal-soft);text-transform:uppercase;letter-spacing:.03em;margin-top:2px;}
+
+  .panel{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:24px;overflow:hidden;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line);}
+  .panel-head h2{font-size:19px;}
+  .panel-body{padding:22px;}
+
+  .empty-state{text-align:center;padding:40px 20px;color:var(--charcoal-soft);}
+  .empty-state .btn{margin-top:14px;}
+  .tab-switch-btn{
+    padding:10px 20px;border-radius:8px;border:1.5px solid var(--line);background:#fff;
+    font-weight:700;font-size:13.5px;cursor:pointer;color:var(--charcoal-soft);transition:all .15s ease;
+  }
+  .tab-switch-btn.active{background:var(--charcoal);color:#fff;border-color:var(--charcoal);}
+  #tabContent .panel{margin-bottom:20px;}
+  #tabContent .field label{font-weight:700;}
+  .svc-item-edit{border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:12px;}
+  .svc-item-edit .field{margin-bottom:10px;}
+  .about-stat-edit{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--charcoal-soft);padding:10px 12px;border-bottom:2px solid var(--line);}
+  td{padding:12px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .p-name-cell{font-weight:700;}
+  .p-spec-cell{color:var(--charcoal-soft);font-size:12.5px;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;background:var(--panel-bg);color:var(--charcoal-soft);}
+  .row-actions{display:flex;gap:8px;}
+  .icon-btn{
+    width:32px;height:32px;border-radius:6px;border:1.5px solid var(--line);background:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s ease;
+  }
+  .icon-btn:hover{border-color:var(--red);}
+  .icon-btn svg{width:15px;height:15px;stroke:var(--charcoal-soft);}
+  .icon-btn:hover svg{stroke:var(--red);}
+  .icon-btn.del:hover{border-color:var(--red-dark);background:#fdeaea;}
+
+  /* ---------- FORM MODAL ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(30,30,32,.55);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:200;padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{background:#fff;border-radius:14px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;}
+  .modal-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+  .modal-head h3{font-size:20px;}
+  .modal-close{cursor:pointer;font-size:22px;color:var(--charcoal-soft);background:none;border:none;line-height:1;}
+  .modal-body{padding:22px 24px;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .modal-foot{padding:18px 24px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--charcoal);color:#fff;padding:13px 22px;border-radius:8px;font-size:13.5px;
+    opacity:0;pointer-events:none;transition:all .3s ease;z-index:300;box-shadow:0 12px 30px rgba(0,0,0,.25);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.error{background:var(--red-dark);}
+
+  /* ---------- CROP MODAL (WhatsApp-style circular adjust) ---------- */
+  .crop-overlay{
+    position:fixed;inset:0;background:rgba(20,20,22,.7);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:400;padding:20px;
+  }
+  .crop-overlay.show{display:flex;}
+  .crop-modal{background:#fff;border-radius:14px;width:100%;max-width:380px;overflow:hidden;}
+  .crop-modal .modal-head{padding:18px 22px;}
+  .crop-stage{
+    position:relative;width:100%;aspect-ratio:1/1;background:#1a1a1c;overflow:hidden;
+    cursor:grab;touch-action:none;user-select:none;
+  }
+  .crop-stage:active{cursor:grabbing;}
+  .crop-stage canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;pointer-events:none;}
+  .crop-controls{padding:16px 22px 4px;}
+  .crop-controls label{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--charcoal-soft);margin-bottom:8px;}
+  .crop-controls input[type=range]{width:100%;accent-color:var(--red);}
+  .crop-hint{font-size:12px;color:var(--charcoal-soft);padding:0 22px 4px;}
+
+  @media(max-width:760px){
+    .stat-row{grid-template-columns:1fr 1fr;}
+    .form-row{grid-template-columns:1fr;}
+    table thead{display:none;}
+    table, tbody, tr, td{display:block;width:100%;}
+    tr{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;padding:10px;}
+    td{border-bottom:none;padding:5px 2px;}
+    td::before{content:attr(data-label);font-weight:700;font-size:10.5px;text-transform:uppercase;color:var(--charcoal-soft);display:block;margin-bottom:2px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- Supabase is already connected — this admin panel is LIVE, no setup needed. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://alsqbfmspujgevxhwlpz.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsc3FiZm1zcHVqZ2V2eGh3bHB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0NzM1OTgsImV4cCI6MjEwMzA0OTU5OH0.BT7ibq25WUDSkrLz1POtZ4cHWQdJbLGpmTSqkLy1TEo";
+  if(!window.supabase){
+    document.getElementById('loginScreen').innerHTML =
+      '<div class="login-card"><h1>CECO Energy</h1><div class="login-error show">' +
+      'Could not load the database library. Check your internet connection and reload this page.' +
+      '</div></div>';
+    throw new Error('Supabase library failed to load');
+  }
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const CATEGORY_LABELS = {
+    inverter:"Inverters", panel:"Solar Panels", battery:"Batteries",
+    breaker:"Breakers", stand:"Solar Stands", wire:"Wires & Cables"
+  };
+
+  let currentProducts = [];
+  let realtimeChannel = null;
+
+  function toast(msg, isError){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!isError);
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2600);
+  }
+  function fmtPKR(n){ return "Rs " + Number(n).toLocaleString("en-PK"); }
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : str;
+    return d.innerHTML;
+  }
+
+  /* ---------- CROP / ADJUST ENGINE (WhatsApp-DP style circular adjust) ---------- */
+  const cropState = {
+    img: null, scale: 1, minScale: 1, offX: 0, offY: 0,
+    dragging: false, lastX: 0, lastY: 0,
+    pinchStartDist: 0, pinchStartScale: 1,
+    onDone: null, outputSize: 500
+  };
+
+  function openCropper(file, onDone){
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      const img = new Image();
+      img.onload = function(){
+        cropState.img = img;
+        cropState.onDone = onDone;
+        const stage = document.getElementById('cropStage');
+        const canvas = document.getElementById('cropCanvas');
+        const size = stage.clientWidth || 320;
+        canvas.width = size; canvas.height = size;
+        const minScale = Math.max(size / img.width, size / img.height);
+        cropState.minScale = minScale;
+        cropState.scale = minScale;
+        cropState.offX = 0; cropState.offY = 0;
+        document.getElementById('cropZoom').value = 1;
+        drawCrop();
+        document.getElementById('cropOverlay').classList.add('show');
+      };
+      img.onerror = function(){ toast('Could not read that image file.', true); };
+      img.src = ev.target.result;
+    };
+    reader.onerror = function(){ toast('Could not read that image file.', true); };
+    reader.readAsDataURL(file);
+  }
+
+  function drawCrop(){
+    const canvas = document.getElementById('cropCanvas');
+    const ctx = canvas.getContext('2d');
+    const size = canvas.width;
+    const img = cropState.img;
+    if(!img) return;
+    ctx.clearRect(0,0,size,size);
+    const s = cropState.scale;
+    const w = img.width * s, h = img.height * s;
+    const cx = size/2 + cropState.offX, cy = size/2 + cropState.offY;
+    ctx.drawImage(img, cx - w/2, cy - h/2, w, h);
+    // dark mask with circular cutout
+    ctx.save();
+    ctx.fillStyle = 'rgba(20,20,22,0.55)';
+    ctx.beginPath();
+    ctx.rect(0,0,size,size);
+    ctx.arc(size/2, size/2, size/2 - 6, 0, Math.PI*2, true);
+    ctx.fill('evenodd');
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(size/2, size/2, size/2 - 6, 0, Math.PI*2);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  function clampOffsets(){
+    const canvas = document.getElementById('cropCanvas');
+    const size = canvas.width;
+    const img = cropState.img;
+    const s = cropState.scale;
+    const w = img.width * s, h = img.height * s;
+    const maxOffX = Math.max(0, (w - size) / 2);
+    const maxOffY = Math.max(0, (h - size) / 2);
+    cropState.offX = Math.min(maxOffX, Math.max(-maxOffX, cropState.offX));
+    cropState.offY = Math.min(maxOffY, Math.max(-maxOffY, cropState.offY));
+  }
+
+  function cropPointerDown(x, y){
+    cropState.dragging = true;
+    cropState.lastX = x; cropState.lastY = y;
+  }
+  function cropPointerMove(x, y){
+    if(!cropState.dragging) return;
+    cropState.offX += (x - cropState.lastX);
+    cropState.offY += (y - cropState.lastY);
+    cropState.lastX = x; cropState.lastY = y;
+    clampOffsets();
+    drawCrop();
+  }
+  function cropPointerUp(){ cropState.dragging = false; }
+
+  function initCropStageEvents(){
+    const stage = document.getElementById('cropStage');
+    stage.addEventListener('mousedown', e => cropPointerDown(e.clientX, e.clientY));
+    window.addEventListener('mousemove', e => cropPointerMove(e.clientX, e.clientY));
+    window.addEventListener('mouseup', cropPointerUp);
+
+    stage.addEventListener('touchstart', e => {
+      if(e.touches.length === 1){
+        cropPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+      } else if(e.touches.length === 2){
+        cropState.dragging = false;
+        cropState.pinchStartDist = touchDist(e.touches);
+        cropState.pinchStartScale = cropState.scale;
+      }
+      e.preventDefault();
+    }, { passive:false });
+    stage.addEventListener('touchmove', e => {
+      if(e.touches.length === 1){
+        cropPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+      } else if(e.touches.length === 2){
+        const dist = touchDist(e.touches);
+        const factor = dist / (cropState.pinchStartDist || dist);
+        setCropZoomFactor(cropState.pinchStartScale * factor);
+      }
+      e.preventDefault();
+    }, { passive:false });
+    stage.addEventListener('touchend', () => { cropPointerUp(); }, { passive:true });
+
+    function touchDist(touches){
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+
+    document.getElementById('cropZoom').addEventListener('input', function(){
+      const zoomFactor = Number(this.value); // 1 = min zoom, up to 4x extra
+      setCropZoomFactor(cropState.minScale * zoomFactor);
+    });
+  }
+
+  function setCropZoomFactor(newScale){
+    const min = cropState.minScale;
+    const max = cropState.minScale * 4;
+    cropState.scale = Math.min(max, Math.max(min, newScale));
+    clampOffsets();
+    drawCrop();
+  }
+
+  window.cancelCrop = function(){
+    document.getElementById('cropOverlay').classList.remove('show');
+    cropState.img = null;
+    cropState.onDone = null;
+  };
+
+  window.confirmCrop = function(){
+    const img = cropState.img;
+    if(!img) return;
+    const out = document.createElement('canvas');
+    out.width = cropState.outputSize;
+    out.height = cropState.outputSize;
+    const octx = out.getContext('2d');
+    const stageCanvas = document.getElementById('cropCanvas');
+    const stageSize = stageCanvas.width;
+    const ratio = out.width / stageSize;
+    const s = cropState.scale * ratio;
+    const w = img.width * s, h = img.height * s;
+    const cx = out.width/2 + cropState.offX * ratio;
+    const cy = out.height/2 + cropState.offY * ratio;
+    // circular clip so preview matches the WhatsApp-style adjust exactly
+    octx.save();
+    octx.beginPath();
+    octx.arc(out.width/2, out.height/2, out.width/2, 0, Math.PI*2);
+    octx.clip();
+    octx.drawImage(img, cx - w/2, cy - h/2, w, h);
+    octx.restore();
+    out.toBlob(function(blob){
+      const cb = cropState.onDone;
+      document.getElementById('cropOverlay').classList.remove('show');
+      cropState.img = null;
+      cropState.onDone = null;
+      if(cb) cb(blob);
+    }, 'image/png', 0.95);
+  };
+
+  /* ---------- AUTH FLOW ---------- */
+  window.addEventListener('error', (e) => {
+    if(pending2FAEmail) return; // don't boot the user out of an in-progress OTP verification
+    const errBox = document.getElementById('loginError');
+    if(errBox){
+      errBox.textContent = 'Something went wrong: ' + (e.message || 'unknown error') + '. Try reloading the page.';
+      errBox.classList.add('show');
+    }
+    document.getElementById('loginBlock').style.display = 'block';
+    document.getElementById('signupBlock').style.display = 'none';
+    document.getElementById('confirmNotice').style.display = 'none';
+    document.getElementById('otpBlock').style.display = 'none';
+  });
+
+  async function init(){
+    try{
+      const { data:{ session } } = await sb.auth.getSession();
+      if(session){ await sb.rpc('claim_first_admin'); enterDashboard(session.user); }
+      else { await showLoginOrSignup(); }
+    }catch(err){
+      console.error(err);
+      showLoginOrSignup(true);
+    }
+  }
+
+  window.switchToLogin = function(){
+    document.getElementById('signupBlock').style.display = 'none';
+    document.getElementById('confirmNotice').style.display = 'none';
+    document.getElementById('otpBlock').style.display = 'none';
+    document.getElementById('loginBlock').style.display = 'block';
+    document.getElementById('loginError').classList.remove('show');
+  };
+  window.switchToSignup = function(){
+    document.getElementById('loginBlock').style.display = 'none';
+    document.getElementById('confirmNotice').style.display = 'none';
+    document.getElementById('otpBlock').style.display = 'none';
+    document.getElementById('signupBlock').style.display = 'block';
+    document.getElementById('loginError').classList.remove('show');
+  };
+
+  async function showLoginOrSignup(forceLogin){
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('dash').classList.remove('show');
+    let firstRun = false;
+    let detectionFailed = false;
+    if(!forceLogin){
+      try{
+        const { data, error } = await sb.rpc('admin_exists');
+        if(error){ detectionFailed = true; console.error('admin_exists error:', error); }
+        firstRun = !error && data === false;
+      }catch(err){
+        detectionFailed = true;
+        console.error('admin_exists threw:', err);
+      }
+    }
+    document.getElementById('signupBlock').style.display = firstRun ? 'block' : 'none';
+    document.getElementById('loginBlock').style.display = firstRun ? 'none' : 'block';
+    document.getElementById('confirmNotice').style.display = 'none';
+    document.getElementById('otpBlock').style.display = 'none';
+    if(detectionFailed){
+      const errBox = document.getElementById('loginError');
+      errBox.textContent = "Couldn't reach the database to check your account status — but you can still sign in, or use the link below to create an account if this is your first time.";
+      errBox.classList.add('show');
+    }
+  }
+
+  window.doSignup = async function(e){
+    e.preventDefault();
+    const email = document.getElementById('suEmail').value.trim();
+    const password = document.getElementById('suPassword').value;
+    const errBox = document.getElementById('loginError');
+    errBox.classList.remove('show');
+    const { data, error } = await sb.auth.signUp({ email, password });
+    if(error){ errBox.textContent = error.message; errBox.classList.add('show'); return false; }
+    if(data.session){
+      await sb.rpc('claim_first_admin');
+      enterDashboard(data.session.user);
+    } else {
+      document.getElementById('signupBlock').style.display = 'none';
+      document.getElementById('confirmNotice').style.display = 'block';
+      document.getElementById('confirmEmailText').textContent = email;
+    }
+    return false;
+  };
+
+  /* ---------- 2FA: Email OTP step-up ---------- */
+  let pending2FAEmail = null;
+  let otpResendCooldownTimer = null;
+
+  window.doLogin = async function(e){
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const errBox = document.getElementById('loginError');
+    errBox.classList.remove('show');
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = 'Verifying…';
+
+    // Factor 1: password check. On success we immediately sign the session back out —
+    // it must NOT be usable until factor 2 (email link click) also succeeds.
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){
+      btn.disabled = false; btn.textContent = 'Sign In';
+      errBox.textContent = "Login failed — check your email and password.";
+      errBox.classList.add('show');
+      return false;
+    }
+    await sb.auth.signOut();
+
+    // Factor 2: send a one-time sign-in link to the account's email (Supabase's default
+    // email template is link-based, not a typed code — so the link click IS factor 2).
+    const redirectTarget = window.location.href.split('#')[0];
+    const { error: otpError } = await sb.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false, emailRedirectTo: redirectTarget }
+    });
+    btn.disabled = false; btn.textContent = 'Sign In';
+    if(otpError){
+      if(otpError.message && otpError.message.toLowerCase().includes('rate limit')){
+        errBox.textContent = "Password correct — but Supabase's free email system has a short-term send limit and needs a short break (usually resets within an hour). Please try again shortly.";
+      } else {
+        errBox.textContent = "Password correct, but couldn't send the verification email: " + otpError.message;
+      }
+      errBox.classList.add('show');
+      return false;
+    }
+    pending2FAEmail = email;
+    showOtpScreen(email);
+    return false;
+  };
+
+  function showOtpScreen(email){
+    document.getElementById('loginBlock').style.display = 'none';
+    document.getElementById('signupBlock').style.display = 'none';
+    document.getElementById('confirmNotice').style.display = 'none';
+    document.getElementById('otpBlock').style.display = 'block';
+    document.getElementById('otpEmailText').textContent = email;
+    document.getElementById('loginError').classList.remove('show');
+    startOtpResendCooldown();
+    startOtpSessionPoll();
+  }
+
+  // The link opens admin.html in a (usually new) tab/window already signed in.
+  // This tab keeps quietly polling for that session so it can hand off automatically
+  // instead of leaving the person stuck staring at a "waiting" screen.
+  let otpPollTimer = null;
+  function startOtpSessionPoll(){
+    clearInterval(otpPollTimer);
+    otpPollTimer = setInterval(async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if(session){
+        clearInterval(otpPollTimer);
+        otpPollTimer = null;
+        await sb.rpc('claim_first_admin');
+        pending2FAEmail = null;
+        enterDashboard(session.user);
+      }
+    }, 2500);
+  }
+
+  window.resendOtp = async function(){
+    if(!pending2FAEmail || otpResendCooldownTimer) return;
+    const redirectTarget = window.location.href.split('#')[0];
+    const { error } = await sb.auth.signInWithOtp({
+      email: pending2FAEmail,
+      options: { shouldCreateUser: false, emailRedirectTo: redirectTarget }
+    });
+    const errBox = document.getElementById('loginError');
+    errBox.classList.remove('show');
+    if(error){
+      if(error.message && error.message.toLowerCase().includes('rate limit')){
+        errBox.textContent = "Supabase's free email system needs a short break before sending another — please wait a bit and try again.";
+      } else {
+        errBox.textContent = 'Could not resend the email: ' + error.message;
+      }
+      errBox.classList.add('show');
+      return;
+    }
+    startOtpResendCooldown();
+  };
+
+  function startOtpResendCooldown(){
+    let secs = 30;
+    const link = document.getElementById('otpResendLink');
+    link.style.pointerEvents = 'none';
+    link.style.opacity = '.5';
+    link.textContent = `Resend email (${secs}s)`;
+    clearInterval(otpResendCooldownTimer);
+    otpResendCooldownTimer = setInterval(() => {
+      secs--;
+      if(secs <= 0){
+        clearInterval(otpResendCooldownTimer);
+        otpResendCooldownTimer = null;
+        link.style.pointerEvents = 'auto';
+        link.style.opacity = '1';
+        link.textContent = 'Resend email';
+      } else {
+        link.textContent = `Resend email (${secs}s)`;
+      }
+    }, 1000);
+  }
+
+  window.cancelOtp = function(){
+    pending2FAEmail = null;
+    clearInterval(otpResendCooldownTimer);
+    otpResendCooldownTimer = null;
+    clearInterval(otpPollTimer);
+    otpPollTimer = null;
+    document.getElementById('otpBlock').style.display = 'none';
+    switchToLogin();
+  };
+
+  window.signInWithGoogle = async function(){
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href.split('#')[0] }
+    });
+    if(error){
+      const errBox = document.getElementById('loginError');
+      errBox.textContent = 'Google sign-in isn\'t set up yet on this project. Use email/password for now.';
+      errBox.classList.add('show');
+    }
+  };
+
+  window.doLogout = function(){
+    if(realtimeChannel) sb.removeChannel(realtimeChannel);
+    sb.auth.signOut().then(() => showLoginOrSignup());
+  };
+
+  function enterDashboard(user){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dash').classList.add('show');
+    document.getElementById('adminEmail').textContent = user.email;
+    loadProducts();
+    if(!realtimeChannel){
+      realtimeChannel = sb.channel('products-changes')
+        .on('postgres_changes', { event:'*', schema:'public', table:'products' }, () => loadProducts())
+        .subscribe();
+    }
+  }
+
+  /* ---------- PRODUCTS ---------- */
+  async function loadProducts(){
+    const { data, error } = await sb.from('products').select('*').order('category').order('name');
+    if(error){ toast('Could not load products: ' + error.message, true); return; }
+    currentProducts = data || [];
+    renderTable();
+    renderStats();
+  }
+
+  function renderStats(){
+    document.getElementById('statTotal').textContent = currentProducts.length;
+    const cats = new Set(currentProducts.map(p => p.category));
+    document.getElementById('statCats').textContent = cats.size;
+    const inStock = currentProducts.filter(p => (p.availability||'').toLowerCase().includes('in stock')).length;
+    document.getElementById('statStock').textContent = inStock;
+    const avgPrice = currentProducts.length ? Math.round(currentProducts.reduce((s,p)=>s+Number(p.price||0),0)/currentProducts.length) : 0;
+    document.getElementById('statAvg').textContent = currentProducts.length ? fmtPKR(avgPrice) : '—';
+    loadVisitCount();
+  }
+
+  async function loadVisitCount(){
+    const { data, error } = await sb.from('site_stats').select('total_visits').eq('id', 1).single();
+    if(!error && data){
+      document.getElementById('statVisits').textContent = data.total_visits;
+    }
+  }
+
+  function renderTable(){
+    const tbody = document.getElementById('productTbody');
+    const emptyState = document.getElementById('emptyState');
+    const tableWrap = document.getElementById('tableWrap');
+    if(currentProducts.length === 0){
+      emptyState.style.display = 'block';
+      tableWrap.style.display = 'none';
+      return;
+    }
+    emptyState.style.display = 'none';
+    tableWrap.style.display = 'block';
+    tbody.innerHTML = currentProducts.map(p => `
+      <tr>
+        <td data-label="Product">
+          <div style="display:flex;align-items:center;gap:10px;">
+            ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" loading="lazy" decoding="async" style="width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid var(--line);flex-shrink:0;">` : `<div style="width:38px;height:38px;border-radius:6px;background:var(--panel-bg);flex-shrink:0;"></div>`}
+            <div><div class="p-name-cell">${escapeHtml(p.name)}</div><div class="p-spec-cell">${escapeHtml(p.spec||'')}${p.sku ? ` · SKU: ${escapeHtml(p.sku)}` : ''}</div></div>
+          </div>
+        </td>
+        <td data-label="Category"><span class="badge">${escapeHtml(CATEGORY_LABELS[p.category] || p.category)}</span></td>
+        <td data-label="Price">${fmtPKR(p.price)}</td>
+        <td data-label="Availability">${escapeHtml(p.availability||'')}</td>
+        <td data-label="Actions">
+          <div class="row-actions">
+            <button class="icon-btn" onclick="editProduct('${p.id}')" title="Edit">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+            </button>
+            <button class="icon-btn del" onclick="deleteProduct('${p.id}','${escapeHtml(p.name).replace(/'/g,"\\'")}')" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  let editingId = null;
+  let pendingImageUrl = null;
+
+  window.onImageSelected = function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size > 3 * 1024 * 1024){
+      toast('Image too large — please use one under 3MB.', true);
+      e.target.value = '';
+      return;
+    }
+    openCropper(file, async function(blob){
+      const statusEl = document.getElementById('imageUploadStatus');
+      statusEl.textContent = 'Uploading…';
+      const filePath = `${Date.now()}_${Math.random().toString(36).slice(2,8)}.png`;
+      const { data, error } = await sb.storage.from('product-images').upload(filePath, blob, { upsert: false, contentType: 'image/png' });
+      if(error){
+        statusEl.textContent = '';
+        toast('Photo upload failed: ' + error.message, true);
+        return;
+      }
+      const { data: urlData } = sb.storage.from('product-images').getPublicUrl(data.path);
+      pendingImageUrl = urlData.publicUrl;
+      document.getElementById('imagePreview').src = pendingImageUrl;
+      document.getElementById('imagePreviewWrap').style.display = 'block';
+      statusEl.textContent = 'Uploaded ✓';
+    });
+    e.target.value = '';
+  };
+
+  window.openAddModal = function(){
+    editingId = null;
+    pendingImageUrl = null;
+    document.getElementById('modalTitle').textContent = 'Add Product';
+    document.getElementById('fName').value = '';
+    document.getElementById('fSpec').value = '';
+    document.getElementById('fSku').value = '';
+    document.getElementById('fCategory').value = 'inverter';
+    document.getElementById('fPrice').value = '';
+    document.getElementById('fAvail').value = 'In Stock';
+    document.getElementById('fImage').value = '';
+    document.getElementById('imagePreviewWrap').style.display = 'none';
+    document.getElementById('imageUploadStatus').textContent = '';
+    document.getElementById('modalOverlay').classList.add('show');
+  };
+
+  window.editProduct = function(id){
+    const p = currentProducts.find(x => x.id === id);
+    if(!p) return;
+    editingId = id;
+    pendingImageUrl = p.image_url || null;
+    document.getElementById('modalTitle').textContent = 'Edit Product';
+    document.getElementById('fName').value = p.name;
+    document.getElementById('fSpec').value = p.spec || '';
+    document.getElementById('fSku').value = p.sku || '';
+    document.getElementById('fCategory').value = p.category;
+    document.getElementById('fPrice').value = p.price;
+    document.getElementById('fAvail').value = p.availability || 'In Stock';
+    document.getElementById('fImage').value = '';
+    document.getElementById('imageUploadStatus').textContent = '';
+    if(p.image_url){
+      document.getElementById('imagePreview').src = p.image_url;
+      document.getElementById('imagePreviewWrap').style.display = 'block';
+    } else {
+      document.getElementById('imagePreviewWrap').style.display = 'none';
+    }
+    document.getElementById('modalOverlay').classList.add('show');
+  };
+
+  window.closeModal = function(){
+    document.getElementById('modalOverlay').classList.remove('show');
+  };
+
+  window.saveProduct = async function(e){
+    e.preventDefault();
+    const payload = {
+      name: document.getElementById('fName').value.trim(),
+      spec: document.getElementById('fSpec').value.trim(),
+      sku: document.getElementById('fSku').value.trim() || null,
+      category: document.getElementById('fCategory').value,
+      price: Number(document.getElementById('fPrice').value) || 0,
+      availability: document.getElementById('fAvail').value.trim() || 'In Stock',
+      image_url: pendingImageUrl,
+      updated_at: new Date().toISOString()
+    };
+    if(!payload.name){ toast('Product name is required.', true); return false; }
+    let error;
+    if(editingId){
+      ({ error } = await sb.from('products').update(payload).eq('id', editingId));
+    } else {
+      ({ error } = await sb.from('products').insert(payload));
+    }
+    if(error){ toast('Save failed: ' + error.message, true); return false; }
+    toast(editingId ? 'Product updated.' : 'Product added.');
+    closeModal();
+    loadProducts();
+    return false;
+  };
+
+  window.deleteProduct = async function(id, name){
+    if(!confirm(`Delete "${name}"? This can't be undone.`)) return;
+    const { error } = await sb.from('products').delete().eq('id', id);
+    if(error){ toast('Delete failed: ' + error.message, true); return; }
+    toast('Product deleted.');
+    loadProducts();
+  };
+
+  window.importStarterProducts = async function(){
+    toast('Products are already loaded from your database.');
+  };
+
+  /* ---------- SITE CONTENT (Website Content tab) ---------- */
+  let siteContentCache = null;
+
+  window.switchDashTab = function(tab){
+    document.getElementById('tabProducts').style.display = tab === 'products' ? 'block' : 'none';
+    document.getElementById('tabContent').style.display = tab === 'content' ? 'block' : 'none';
+    document.getElementById('tabBtnProducts').classList.toggle('active', tab === 'products');
+    document.getElementById('tabBtnContent').classList.toggle('active', tab === 'content');
+    if(tab === 'content' && !siteContentCache) loadSiteContentForm();
+  };
+
+  function renderServiceItemFields(items){
+    const wrap = document.getElementById('svcItemsWrap');
+    wrap.innerHTML = items.map((item, i) => `
+      <div class="svc-item-edit">
+        <div class="field"><label style="font-size:12px;">Service ${i+1} — Title</label><input type="text" id="cSvcTitle${i}" value="${escapeHtml(item.title||'')}"></div>
+        <div class="field" style="margin-bottom:0;"><label style="font-size:12px;">Description</label><input type="text" id="cSvcDesc${i}" value="${escapeHtml(item.desc||'')}"></div>
+      </div>
+    `).join('');
+  }
+
+  function renderAboutStatFields(stats){
+    const wrap = document.getElementById('aboutStatsWrap');
+    wrap.innerHTML = stats.map((s, i) => `
+      <div class="about-stat-edit">
+        <input type="text" id="cAboutStatNum${i}" placeholder="Number/word" value="${escapeHtml(s.num||'')}">
+        <input type="text" id="cAboutStatLbl${i}" placeholder="Label" value="${escapeHtml(s.label||'')}">
+      </div>
+    `).join('');
+  }
+
+  const CATEGORY_KEYS = ['inverter','panel','breaker','battery','stand','wire'];
+  const CATEGORY_DEFAULT_NAMES = { inverter:'Inverter', panel:'Solar Panel', breaker:'Breaker', battery:'Battery', stand:'Solar Stand', wire:'Wire' };
+  let pendingCategoryIcons = {}; // key -> newly uploaded URL (only set if changed this session)
+
+  function renderCategoryFields(labels, icons){
+    const wrap = document.getElementById('catIconsWrap');
+    pendingCategoryIcons = {};
+    wrap.innerHTML = CATEGORY_KEYS.map(key => `
+      <div style="border:1px solid var(--line);border-radius:8px;padding:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div id="catIconPreview_${key}" style="width:40px;height:40px;border-radius:50%;background:var(--panel-bg);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+            ${icons[key] ? `<img src="${escapeHtml(icons[key])}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="font-size:9px;color:var(--charcoal-soft);">icon</span>`}
+          </div>
+          <input type="text" id="cLabel_${key}" value="${escapeHtml(labels[key] || CATEGORY_DEFAULT_NAMES[key])}" placeholder="${CATEGORY_DEFAULT_NAMES[key]}" style="flex:1;padding:8px 10px;font-size:13px;">
+        </div>
+        <input type="file" accept="image/png,image/jpeg,image/webp" onchange="onCategoryIconSelected(event,'${key}')" style="width:100%;font-size:11px;">
+      </div>
+    `).join('');
+  }
+
+  window.onCategoryIconSelected = function(e, key){
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size > 2 * 1024 * 1024){
+      toast('Icon image too large — please use one under 2MB.', true);
+      e.target.value = '';
+      return;
+    }
+    openCropper(file, async function(blob){
+      const filePath = `${key}_${Date.now()}.png`;
+      const { data, error } = await sb.storage.from('category-icons').upload(filePath, blob, { upsert: false, contentType: 'image/png' });
+      if(error){ toast('Icon upload failed: ' + error.message, true); return; }
+      const { data: urlData } = sb.storage.from('category-icons').getPublicUrl(data.path);
+      pendingCategoryIcons[key] = urlData.publicUrl;
+      document.getElementById(`catIconPreview_${key}`).innerHTML = `<img src="${escapeHtml(urlData.publicUrl)}" style="width:100%;height:100%;object-fit:cover;">`;
+      toast(`${CATEGORY_DEFAULT_NAMES[key]} icon uploaded ✓`);
+    });
+    e.target.value = '';
+  };
+
+  async function loadSiteContentForm(){
+    const { data, error } = await sb.from('site_content').select('content').eq('id', 1).single();
+    if(error || !data){ toast('Could not load website content: ' + (error ? error.message : 'no data'), true); return; }
+    const c = data.content || {};
+    siteContentCache = c;
+
+    const hero = c.hero || {};
+    document.getElementById('cHeroEyebrow').value = hero.eyebrow || '';
+    document.getElementById('cHeroTitleBefore').value = hero.title_before || '';
+    document.getElementById('cHeroTitleAccent').value = hero.title_accent || '';
+    document.getElementById('cHeroTitleAfter').value = hero.title_after || '';
+    document.getElementById('cHeroLead').value = hero.lead || '';
+
+    const catSec = c.categories_section || {};
+    document.getElementById('cCatEyebrow').value = catSec.eyebrow || '';
+    const titleLines = (catSec.title || '').split('\n');
+    document.getElementById('cCatTitleLine1').value = titleLines[0] || '';
+    document.getElementById('cCatTitleLine2').value = titleLines[1] || '';
+    document.getElementById('cCatSub').value = catSec.sub || '';
+
+    renderCategoryFields(c.category_labels || {}, c.category_icons || {});
+
+    const svcSec = c.services_section || {};
+    document.getElementById('cSvcEyebrow').value = svcSec.eyebrow || '';
+    const svcTitleLines = (svcSec.title || '').split('\n');
+    document.getElementById('cSvcTitleLine1').value = svcTitleLines[0] || '';
+    document.getElementById('cSvcTitleLine2').value = svcTitleLines[1] || '';
+    renderServiceItemFields(svcSec.items && svcSec.items.length ? svcSec.items : Array(6).fill({title:'',desc:''}));
+
+    const aboutSec = c.about_section || {};
+    document.getElementById('cAboutEyebrow').value = aboutSec.eyebrow || '';
+    document.getElementById('cAboutTitle').value = aboutSec.title || '';
+    document.getElementById('cAboutText').value = aboutSec.text || '';
+    pendingAboutImage = aboutSec.image || null;
+    renderAboutImagePreview(pendingAboutImage);
+    renderAboutStatFields(aboutSec.stats && aboutSec.stats.length ? aboutSec.stats : Array(4).fill({num:'',label:''}));
+  }
+
+  let pendingAboutImage = null;
+
+  function renderAboutImagePreview(url){
+    const preview = document.getElementById('aboutImagePreview');
+    const removeBtn = document.getElementById('aboutImageRemoveBtn');
+    if(url){
+      preview.innerHTML = `<img src="${escapeHtml(url)}" style="width:100%;height:100%;object-fit:cover;">`;
+      removeBtn.style.display = 'inline-flex';
+    } else {
+      preview.innerHTML = `<span style="font-size:10px;color:var(--charcoal-soft);">no photo</span>`;
+      removeBtn.style.display = 'none';
+    }
+  }
+
+  window.onAboutImageSelected = function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size > 5 * 1024 * 1024){
+      toast('Image too large — please use one under 5MB.', true);
+      e.target.value = '';
+      return;
+    }
+    openCropper(file, async function(blob){
+      const filePath = `about_${Date.now()}.png`;
+      const { data, error } = await sb.storage.from('site-images').upload(filePath, blob, { upsert: false, contentType: 'image/png' });
+      if(error){ toast('Photo upload failed: ' + error.message, true); return; }
+      const { data: urlData } = sb.storage.from('site-images').getPublicUrl(data.path);
+      pendingAboutImage = urlData.publicUrl;
+      renderAboutImagePreview(pendingAboutImage);
+      toast('About photo uploaded ✓');
+    });
+    e.target.value = '';
+  };
+
+  window.removeAboutImage = function(){
+    pendingAboutImage = null;
+    renderAboutImagePreview(null);
+  };
+
+  window.saveSiteContent = async function(){
+    const svcItems = [];
+    for(let i = 0; i < 6; i++){
+      svcItems.push({
+        title: document.getElementById(`cSvcTitle${i}`).value.trim(),
+        desc: document.getElementById(`cSvcDesc${i}`).value.trim()
+      });
+    }
+    const aboutStats = [];
+    for(let i = 0; i < 4; i++){
+      aboutStats.push({
+        num: document.getElementById(`cAboutStatNum${i}`).value.trim(),
+        label: document.getElementById(`cAboutStatLbl${i}`).value.trim()
+      });
+    }
+
+    const content = {
+      hero: {
+        eyebrow: document.getElementById('cHeroEyebrow').value.trim(),
+        title_before: document.getElementById('cHeroTitleBefore').value.trim(),
+        title_accent: document.getElementById('cHeroTitleAccent').value.trim(),
+        title_after: document.getElementById('cHeroTitleAfter').value.trim(),
+        lead: document.getElementById('cHeroLead').value.trim()
+      },
+      categories_section: {
+        eyebrow: document.getElementById('cCatEyebrow').value.trim(),
+        title: [document.getElementById('cCatTitleLine1').value.trim(), document.getElementById('cCatTitleLine2').value.trim()].filter(Boolean).join('\n'),
+        sub: document.getElementById('cCatSub').value.trim()
+      },
+      category_labels: {
+        inverter: document.getElementById('cLabel_inverter').value.trim(),
+        panel: document.getElementById('cLabel_panel').value.trim(),
+        breaker: document.getElementById('cLabel_breaker').value.trim(),
+        battery: document.getElementById('cLabel_battery').value.trim(),
+        stand: document.getElementById('cLabel_stand').value.trim(),
+        wire: document.getElementById('cLabel_wire').value.trim()
+      },
+      category_icons: Object.assign({}, (siteContentCache && siteContentCache.category_icons) || {}, pendingCategoryIcons),
+      services_section: {
+        eyebrow: document.getElementById('cSvcEyebrow').value.trim(),
+        title: [document.getElementById('cSvcTitleLine1').value.trim(), document.getElementById('cSvcTitleLine2').value.trim()].filter(Boolean).join('\n'),
+        items: svcItems
+      },
+      about_section: {
+        eyebrow: document.getElementById('cAboutEyebrow').value.trim(),
+        title: document.getElementById('cAboutTitle').value.trim(),
+        text: document.getElementById('cAboutText').value.trim(),
+        image: pendingAboutImage,
+        stats: aboutStats
+      }
+    };
+
+    const { error } = await sb.from('site_content').update({ content, updated_at: new Date().toISOString() }).eq('id', 1);
+    if(error){ toast('Save failed: ' + error.message, true); return; }
+    siteContentCache = content;
+    toast('Website content updated — check your live site!');
+  };
+
+  // Safety net: if nothing has shown a form within 5 seconds, force the login form visible.
+  setTimeout(() => {
+    const signupVisible = document.getElementById('signupBlock').style.display === 'block';
+    const loginVisible = document.getElementById('loginBlock').style.display === 'block';
+    const otpVisible = document.getElementById('otpBlock').style.display === 'block';
+    const dashVisible = document.getElementById('dash').classList.contains('show');
+    if(!signupVisible && !loginVisible && !otpVisible && !dashVisible){
+      showLoginOrSignup(true);
+    }
+  }, 5000);
+
+  initCropStageEvents();
+  init();
+</script>
+
+<!-- ============ LOGIN ============ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <h1>CECO Energy</h1>
+    <div class="sub" id="screenSub">Admin Panel — sign in to manage products</div>
+    <div class="login-error" id="loginError"></div>
+
+    <!-- First-time setup: create the one admin account -->
+    <div id="signupBlock" style="display:none;">
+      <p style="font-size:13px;color:var(--charcoal-soft);margin-bottom:18px;">No admin account exists yet. Create the one account that will control this website's products.</p>
+      <form onsubmit="return doSignup(event)">
+        <div class="field">
+          <label>Your Email</label>
+          <input type="email" id="suEmail" required placeholder="you@cecoenergy.pk">
+        </div>
+        <div class="field">
+          <label>Choose a Password</label>
+          <input type="password" id="suPassword" required minlength="6" placeholder="At least 6 characters">
+        </div>
+        <button class="btn btn-primary" type="submit">Create Admin Account</button>
+      </form>
+      <p style="text-align:center;font-size:12.5px;margin-top:16px;">
+        Already created an account? <a href="#" onclick="switchToLogin();return false;" style="color:var(--red-dark);font-weight:700;">Sign in instead</a>
+      </p>
+    </div>
+
+    <!-- Email confirmation notice (only shown if Supabase requires it) -->
+    <div id="confirmNotice" style="display:none;text-align:center;">
+      <p style="font-size:14px;margin-bottom:6px;">Confirmation link sent to:</p>
+      <p style="font-weight:700;margin-bottom:18px;" id="confirmEmailText"></p>
+      <p style="font-size:13px;color:var(--charcoal-soft);margin-bottom:20px;">Open that email, click the link, then sign in below.</p>
+      <button class="btn btn-outline" onclick="switchToLogin();">Go to Sign In</button>
+    </div>
+
+    <!-- 2FA: Email link step-up (shown after password succeeds) -->
+    <div id="otpBlock" style="display:none;text-align:center;">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--panel-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--red-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 6l8 7 8-7"/></svg>
+      </div>
+      <p style="font-size:14px;margin-bottom:6px;">Password correct. Verification email sent to:</p>
+      <p style="font-weight:700;margin-bottom:18px;" id="otpEmailText"></p>
+      <p style="font-size:13px;color:var(--charcoal-soft);margin-bottom:4px;">Open that email and tap <strong>Sign in</strong>. This tab will continue automatically — you don't need to come back to it.</p>
+      <p style="font-size:12px;color:var(--charcoal-soft);margin-bottom:18px;">Waiting for confirmation…</p>
+      <p style="text-align:center;font-size:12.5px;">
+        <a href="#" id="otpResendLink" onclick="resendOtp();return false;" style="color:var(--red-dark);font-weight:700;">Resend email</a>
+        &nbsp;·&nbsp;
+        <a href="#" onclick="cancelOtp();return false;" style="color:var(--charcoal-soft);">Cancel</a>
+      </p>
+    </div>
+
+    <!-- Normal sign in -->
+    <div id="loginBlock" style="display:none;">
+      <form onsubmit="return doLogin(event)">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="email" required placeholder="you@cecoenergy.pk">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="password" required placeholder="••••••••">
+        </div>
+        <button class="btn btn-primary" type="submit" id="loginBtn">Sign In</button>
+      </form>
+
+      <div style="display:flex;align-items:center;gap:12px;margin:18px 0;">
+        <div style="flex:1;height:1px;background:var(--line);"></div>
+        <span style="font-size:11.5px;color:var(--charcoal-soft);text-transform:uppercase;letter-spacing:.04em;">or</span>
+        <div style="flex:1;height:1px;background:var(--line);"></div>
+      </div>
+
+      <button type="button" class="btn btn-outline" onclick="signInWithGoogle()" style="width:100%;justify-content:center;gap:10px;">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.85 2.09-1.8 2.73v2.27h2.92c1.7-1.57 2.68-3.88 2.68-6.64z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.27c-.81.54-1.85.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.97 10.7c-.18-.54-.28-1.11-.28-1.7s.1-1.16.28-1.7V4.97H.96C.35 6.17 0 7.55 0 9s.35 2.83.96 4.03l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.97l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+        Sign in with Google
+      </button>
+      <p style="text-align:center;font-size:11px;color:var(--charcoal-soft);margin-top:10px;" id="googleHint">
+        (Needs Google sign-in set up first — ask CECO's developer if this doesn't work yet)
+      </p>
+
+      <p style="text-align:center;font-size:12.5px;margin-top:16px;">
+        First time here? <a href="#" onclick="switchToSignup();return false;" style="color:var(--red-dark);font-weight:700;">Create admin account</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div class="dash" id="dash">
+  <header class="dash-header">
+    <div class="wrap">
+      <div>
+        <h1>CECO Energy Admin</h1>
+        <div class="sub" id="adminEmail"></div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="doLogout()" style="background:transparent;border-color:rgba(255,255,255,.3);color:#fff;">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="wrap dash-body">
+    <div class="stat-row">
+      <div class="stat-card"><div class="num" id="statTotal">0</div><div class="lbl">Total Products</div></div>
+      <div class="stat-card"><div class="num" id="statCats">0</div><div class="lbl">Categories Used</div></div>
+      <div class="stat-card"><div class="num" id="statStock">0</div><div class="lbl">In Stock</div></div>
+      <div class="stat-card"><div class="num" id="statAvg">—</div><div class="lbl">Average Price</div></div>
+      <div class="stat-card"><div class="num" id="statVisits">—</div><div class="lbl">Website Visits</div></div>
+    </div>
+
+    <div class="tab-switch" style="display:flex;gap:10px;margin-bottom:24px;">
+      <button class="tab-switch-btn active" id="tabBtnProducts" onclick="switchDashTab('products')">Products</button>
+      <button class="tab-switch-btn" id="tabBtnContent" onclick="switchDashTab('content')">Website Content</button>
+    </div>
+
+    <div id="tabProducts">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Products</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add Product</button>
+      </div>
+      <div class="panel-body">
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <p>No products yet. Start by importing your current starter list, or add products one by one.</p>
+          <button class="btn btn-outline" onclick="importStarterProducts()">Import Starter Products</button>
+        </div>
+        <div id="tableWrap" style="display:none;overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>Product</th><th>Category</th><th>Price</th><th>Availability</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="productTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <div id="tabContent" style="display:none;">
+      <div class="panel">
+        <div class="panel-head"><h2>Hero Section (Top of Homepage)</h2></div>
+        <div class="panel-body">
+          <div class="field"><label>Small line above headline</label><input type="text" id="cHeroEyebrow"></div>
+          <div class="form-row">
+            <div class="field"><label>Headline — first part</label><input type="text" id="cHeroTitleBefore"></div>
+            <div class="field"><label>Headline — highlighted word (red)</label><input type="text" id="cHeroTitleAccent"></div>
+          </div>
+          <div class="field"><label>Headline — last part</label><input type="text" id="cHeroTitleAfter"></div>
+          <div class="field"><label>Paragraph below headline</label><textarea id="cHeroLead" rows="3"></textarea></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Categories Section</h2></div>
+        <div class="panel-body">
+          <div class="field"><label>Small line above title</label><input type="text" id="cCatEyebrow"></div>
+          <div class="field"><label>Section title (2 lines)</label>
+            <div class="form-row">
+              <input type="text" id="cCatTitleLine1" placeholder="Line 1">
+              <input type="text" id="cCatTitleLine2" placeholder="Line 2">
+            </div>
+          </div>
+          <div class="field"><label>Description text</label><textarea id="cCatSub" rows="2"></textarea></div>
+          <div class="field"><label>The 6 Category Circles — Name &amp; Icon</label>
+            <div id="catIconsWrap" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Services Section</h2></div>
+        <div class="panel-body">
+          <div class="field"><label>Small line above title</label><input type="text" id="cSvcEyebrow"></div>
+          <div class="field"><label>Section title (2 lines)</label>
+            <div class="form-row">
+              <input type="text" id="cSvcTitleLine1" placeholder="Line 1">
+              <input type="text" id="cSvcTitleLine2" placeholder="Line 2">
+            </div>
+          </div>
+          <div id="svcItemsWrap"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>About Section</h2></div>
+        <div class="panel-body">
+          <div class="field"><label>Small line above title</label><input type="text" id="cAboutEyebrow"></div>
+          <div class="field"><label>Section title</label><input type="text" id="cAboutTitle"></div>
+          <div class="field"><label>Paragraph text</label><textarea id="cAboutText" rows="4"></textarea></div>
+          <div class="field"><label>About Graphic (replaces the default illustration with your own photo)</label>
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div id="aboutImagePreview" style="width:90px;height:90px;border-radius:8px;background:var(--panel-bg);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                <span style="font-size:10px;color:var(--charcoal-soft);">no photo</span>
+              </div>
+              <div style="flex:1;">
+                <input type="file" id="fAboutImage" accept="image/png,image/jpeg,image/webp" onchange="onAboutImageSelected(event)" style="width:100%;padding:8px;border:1.5px solid var(--line);border-radius:8px;font-size:12.5px;">
+                <p style="font-size:11.5px;color:var(--charcoal-soft);margin-top:6px;">Leave empty to keep the default sun/arc graphic.</p>
+                <button type="button" class="btn btn-outline btn-sm" id="aboutImageRemoveBtn" onclick="removeAboutImage()" style="display:none;margin-top:8px;">Remove photo</button>
+              </div>
+            </div>
+          </div>
+          <div class="field"><label>Stat Boxes (4)</label>
+            <div id="aboutStatsWrap"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="position:sticky;bottom:20px;display:flex;justify-content:flex-end;">
+        <button class="btn btn-primary" style="box-shadow:0 12px 30px rgba(0,0,0,.2);" onclick="saveSiteContent()">Save Website Content</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADD/EDIT MODAL ============ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Add Product</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <form onsubmit="return saveProduct(event)">
+      <div class="modal-body">
+        <div class="field">
+          <label>Product Name</label>
+          <input type="text" id="fName" required placeholder="e.g. 5kW Hybrid Inverter">
+        </div>
+        <div class="field">
+          <label>Spec / Description</label>
+          <input type="text" id="fSpec" placeholder="e.g. 48V · MPPT · Wi-Fi Monitoring">
+        </div>
+        <div class="field">
+          <label>SKU <span style="font-weight:400;text-transform:none;color:var(--charcoal-soft);">(shown to customer + auto-filled in WhatsApp enquiries)</span></label>
+          <input type="text" id="fSku" placeholder="e.g. INV-5KW-001">
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Category</label>
+            <select id="fCategory" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:8px;font-size:14.5px;">
+              <option value="inverter">Inverter</option>
+              <option value="panel">Solar Panel</option>
+              <option value="battery">Battery</option>
+              <option value="breaker">Breaker</option>
+              <option value="stand">Solar Stand</option>
+              <option value="wire">Wire</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Price (PKR)</label>
+            <input type="number" id="fPrice" required placeholder="145000">
+          </div>
+        </div>
+        <div class="field">
+          <label>Availability</label>
+          <input type="text" id="fAvail" placeholder="In Stock">
+        </div>
+        <div class="field">
+          <label>Product Photo</label>
+          <div id="imagePreviewWrap" style="display:none;margin-bottom:10px;">
+            <img id="imagePreview" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:1px solid var(--line);">
+          </div>
+          <input type="file" id="fImage" accept="image/png,image/jpeg,image/webp" onchange="onImageSelected(event)" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;">
+          <p id="imageUploadStatus" style="font-size:12px;color:var(--charcoal-soft);margin-top:6px;"></p>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ CROP / ADJUST MODAL (WhatsApp-DP style) ============ -->
+<div class="crop-overlay" id="cropOverlay">
+  <div class="crop-modal">
+    <div class="modal-head">
+      <h3>Adjust Photo</h3>
+      <button class="modal-close" onclick="cancelCrop()">&times;</button>
+    </div>
+    <div class="crop-stage" id="cropStage">
+      <canvas id="cropCanvas"></canvas>
+    </div>
+    <div class="crop-hint">Drag to reposition · pinch or use the slider to zoom</div>
+    <div class="crop-controls">
+      <label>Zoom</label>
+      <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1">
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-outline" onclick="cancelCrop()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="confirmCrop()">Use Photo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</body>
+</html>
